@@ -14,6 +14,7 @@ const CATEGORIES = [
 const ITEMS_PER_PAGE = 10;
 
 const ProductsPage = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +30,7 @@ const ProductsPage = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('adminToken');
-        const response = await fetch('http://localhost:5000/api/v1/products/admin/all', {
+        const response = await fetch('http://localhost:5000/api/v1/admin/products/', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

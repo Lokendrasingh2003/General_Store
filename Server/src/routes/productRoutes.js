@@ -68,67 +68,6 @@ const updateProductSchema = Joi.object({
 });
 
 /**
- * @route   GET /api/v1/products/admin/all
- * @desc    Get all products (Admin only) - includes inactive products
- * @access  Private (Admin)
- */
-router.get('/admin/all', verifyToken, authorize('admin'), async (req, res) => {
-  try {
-    const { category, search, sortBy } = req.query;
-    
-    let filter = {};
-    
-    if (category) {
-      filter.category = category;
-    }
-    
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { brand: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    let sortOption = { createdAt: -1 };
-    if (sortBy) {
-      switch (sortBy) {
-        case 'name-asc':
-          sortOption = { name: 1 };
-          break;
-        case 'name-desc':
-          sortOption = { name: -1 };
-          break;
-        case 'price-low':
-          sortOption = { price: 1 };
-          break;
-        case 'price-high':
-          sortOption = { price: -1 };
-          break;
-        default:
-          sortOption = { createdAt: -1 };
-      }
-    }
-    
-    const products = await Product.find(filter)
-      .populate('shopId', 'shopName')
-      .sort(sortOption);
-    
-    res.json({
-      success: true,
-      message: 'Admin products retrieved successfully',
-      data: products,
-      count: products.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving admin products',
-      error: error.message
-    });
-  }
-});
-
-/**
  * @route   GET /api/v1/products
  * @desc    Get all products (Public)
  * @access  Public
