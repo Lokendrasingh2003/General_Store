@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './ProductsList.module.css';
 
 const CATEGORIES = [
@@ -122,7 +123,7 @@ const ProductsPage = () => {
           <h1>Products</h1>
           <p className={styles.subtitle}>Manage your product inventory</p>
         </div>
-        <button className={styles.addBtn}>+ Add New Product</button>
+        <button className={styles.addBtn} onClick={() => navigate('/admin/products/add')}>+ Add New Product</button>
       </div>
 
       {/* Filters and Search */}
