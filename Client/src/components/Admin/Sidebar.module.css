@@ -1,7 +1,7 @@
 .sidebar {
   width: 260px;
-  background: #064e3b;
-  color: #d1fae5;
+  background: #111827;
+  color: #F9FAFB;
   padding: 24px;
   position: sticky;
   top: 0;
@@ -16,7 +16,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: #F9FAFB;
 }
 
 .nav {
@@ -26,7 +26,7 @@
 }
 
 .link {
-  color: #d1fae5;
+  color: #F9FAFB;
   text-decoration: none;
   padding: 10px 14px;
   border-radius: 10px;
@@ -36,14 +36,14 @@
 }
 
 .link:hover {
-  background: rgba(16, 185, 129, 0.2);
-  color: #ffffff;
+  background: rgba(59, 130, 246, 0.15);
+  color: #F9FAFB;
 }
 
 .active {
-  background: #10b981;
+  background: #3B82F6;
   color: #ffffff;
-  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.3);
 }
 
 .backdrop {
@@ -65,7 +65,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(6, 78, 59, 0.6);
+    background: rgba(17, 24, 39, 0.6);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;

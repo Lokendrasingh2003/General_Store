@@ -3,9 +3,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #d1fae5;
-  box-shadow: 0 6px 18px rgba(6, 78, 59, 0.05);
+  background: #1F2937;
+  border-bottom: 1px solid #374151;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -14,21 +14,22 @@
 .menuButton {
   font-size: 1.2rem;
   border: none;
-  background: #f0fdf4;
+  background: #374151;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
+  color: #F9FAFB;
 }
 
 .menuButton:hover {
-  background: #d1fae5;
+  background: #4B5563;
 }
 
 .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #064e3b;
+  color: #F9FAFB;
 }
 
 .profile {
@@ -41,7 +42,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #10b981;
+  background: #3B82F6;
   color: #ffffff;
   display: grid;
   place-items: center;
@@ -56,17 +57,17 @@
 
 .name {
   font-weight: 600;
-  color: #047857;
+  color: #F9FAFB;
 }
 
 .role {
   font-size: 0.8rem;
-  color: #059669;
+  color: #9CA3AF;
 }
 
 .logout {
   border: none;
-  background: #047857;
+  background: #3B82F6;
   color: #ffffff;
   padding: 8px 14px;
   border-radius: 8px;
@@ -75,7 +76,7 @@
 }
 
 .logout:hover {
-  background: #10b981;
+  background: #2563EB;
   transform: translateY(-1px);
 }
 
