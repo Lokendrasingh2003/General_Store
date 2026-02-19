@@ -4,8 +4,8 @@
   justify-content: space-between;
   padding: 16px 24px;
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  border-bottom: 1px solid #d1fae5;
+  box-shadow: 0 6px 18px rgba(6, 78, 59, 0.05);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -14,7 +14,7 @@
 .menuButton {
   font-size: 1.2rem;
   border: none;
-  background: #f1f5f9;
+  background: #f0fdf4;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -22,13 +22,13 @@
 }
 
 .menuButton:hover {
-  background: #e2e8f0;
+  background: #d1fae5;
 }
 
 .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #064e3b;
 }
 
 .profile {
@@ -41,7 +41,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #1d4ed8;
+  background: #10b981;
   color: #ffffff;
   display: grid;
   place-items: center;
@@ -56,17 +56,17 @@
 
 .name {
   font-weight: 600;
-  color: #1f2937;
+  color: #047857;
 }
 
 .role {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #059669;
 }
 
 .logout {
   border: none;
-  background: #0f172a;
+  background: #047857;
   color: #ffffff;
   padding: 8px 14px;
   border-radius: 8px;
@@ -75,7 +75,7 @@
 }
 
 .logout:hover {
-  background: #1d4ed8;
+  background: #10b981;
   transform: translateY(-1px);
 }
 
