@@ -11,23 +11,6 @@ const {
 const router = express.Router();
 
 /**
- * @route   GET /api/products
- * @desc    Get all available products with pagination, search, filtering, and sorting
- * @access  Public
- * @query   {Number} page - Page number (default: 1)
- * @query   {Number} limit - Items per page (default: 20, max: 100)
- * @query   {String} search - Search term (name or description)
- * @query   {String} category - Filter by category
- * @query   {Number} minPrice - Minimum price filter
- * @query   {Number} maxPrice - Maximum price filter
- * @query   {String} sortBy - Sort field (name, price, rating, createdAt)
- * @query   {Number} sortOrder - 1 for ascending, -1 for descending (default: -1)
- * @example
- * GET /api/products?page=1&limit=20&search=laptop&category=electronics&minPrice=50000&maxPrice=100000
- */
-router.get('/', getAllProducts);
-
-/**
  * @route   GET /api/products/categories
  * @desc    Get all available product categories with stats (count, price range, etc)
  * @access  Public
@@ -79,6 +62,23 @@ router.get('/category/:category', getProductsByCategory);
  * GET /api/products/shop/60d5ec49c1234567890abcde?page=1&limit=20
  */
 router.get('/shop/:shopId', getProductsByShop);
+
+/**
+ * @route   GET /api/products
+ * @desc    Get all available products with pagination, search, filtering, and sorting
+ * @access  Public
+ * @query   {Number} page - Page number (default: 1)
+ * @query   {Number} limit - Items per page (default: 20, max: 100)
+ * @query   {String} search - Search term (name or description)
+ * @query   {String} category - Filter by category
+ * @query   {Number} minPrice - Minimum price filter
+ * @query   {Number} maxPrice - Maximum price filter
+ * @query   {String} sortBy - Sort field (name, price, rating, createdAt)
+ * @query   {Number} sortOrder - 1 for ascending, -1 for descending (default: -1)
+ * @example
+ * GET /api/products?page=1&limit=20&search=laptop&category=electronics&minPrice=50000&maxPrice=100000
+ */
+router.get('/', getAllProducts);
 
 /**
  * @route   GET /api/products/:id

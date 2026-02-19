@@ -1,0 +1,28 @@
+.container {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.select {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  
+  & .MuiOutlinedInput-root {
+    &:hover fieldset {
+      border-color: #4a90e2;
+    }
+  }
+}
+
+.select fieldset {
+  border-color: #e0e0e0;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 4px;
+  display: block;
+  font-weight: 500;
+}

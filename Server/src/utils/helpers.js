@@ -3,27 +3,27 @@
  */
 
 /**
- * Format success response
+ * Send success response
  */
-const successResponse = (data, message = 'Success', statusCode = 200) => {
-  return {
+const successResponse = (res, data, message = 'Success', statusCode = 200) => {
+  return res.status(statusCode).json({
     success: true,
     statusCode,
     message,
     data
-  };
+  });
 };
 
 /**
- * Format error response
+ * Send error response
  */
-const errorResponse = (message = 'Error', statusCode = 400, errors = null) => {
-  return {
+const errorResponse = (res, message = 'Error', statusCode = 400, errors = null) => {
+  return res.status(statusCode).json({
     success: false,
     statusCode,
     message,
     ...(errors && { errors })
-  };
+  });
 };
 
 /**

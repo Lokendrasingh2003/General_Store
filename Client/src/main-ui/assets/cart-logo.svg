@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cartGradient" x1="46" y1="67" x2="468" y2="463" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFBA08"/>
+      <stop offset="1" stop-color="#FF4D2D"/>
+    </linearGradient>
+  </defs>
+  <path d="M14 64L96 84L118 94" stroke="url(#cartGradient)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M108 92L142 182H496L435 390H188L108 92Z" fill="url(#cartGradient)"/>
+  <path d="M218 226L251 341" stroke="#111111" stroke-width="14" stroke-linecap="round"/>
+  <path d="M318 227V341" stroke="#111111" stroke-width="14" stroke-linecap="round"/>
+  <path d="M412 226L378 340" stroke="#111111" stroke-width="14" stroke-linecap="round"/>
+  <path d="M165 400H498" stroke="url(#cartGradient)" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="252" cy="462" r="40" fill="url(#cartGradient)"/>
+  <circle cx="418" cy="462" r="40" fill="url(#cartGradient)"/>
+</svg>

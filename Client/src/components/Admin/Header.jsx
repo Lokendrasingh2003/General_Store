@@ -5,7 +5,7 @@ const Header = ({ onToggleSidebar }) => {
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('userRole');
-    window.location.href = '/';
+    window.location.href = '/admin/login';
   };
 
   return (

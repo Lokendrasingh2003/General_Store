@@ -17,6 +17,7 @@
     "backup:create": "bash scripts/backup.sh backup",
     "backup:restore": "bash scripts/backup.sh restore",
     "backup:list": "bash scripts/backup.sh list",
+    "seed:products": "node src/scripts/seedSampleProducts.js",
     "health:check": "curl -f http://localhost:5000/health",
     "pm2:start": "pm2 start src/server.js --name general-store-api",
     "pm2:stop": "pm2 stop general-store-api",
