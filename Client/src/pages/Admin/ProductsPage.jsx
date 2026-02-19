@@ -27,7 +27,12 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/v1/products');
+        const token = localStorage.getItem('adminToken');
+        const response = await fetch('http://localhost:5000/api/v1/products/admin/all', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
         
         if (data.success) {
