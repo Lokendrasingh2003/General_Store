@@ -1,0 +1,22 @@
+:root {
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  color: #0f172a;
+  background-color: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}

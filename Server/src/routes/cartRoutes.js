@@ -1,6 +1,6 @@
 const express = require('express');
-const { verifyToken } = require('../middleware/auth');
-const { validate } = require('../middleware/validation');
+const verifyToken = require('../middleware/auth');
+const validate = require('../middleware/validation');
 const Joi = require('joi');
 const {
   addToCart,

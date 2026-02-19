@@ -332,6 +332,7 @@ const getCorsOptions = () => {
   const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
     .split(',')
     .map(origin => origin.trim());
+  const isDev = process.env.NODE_ENV !== 'production';
 
   return {
     // Allowed origins
@@ -339,11 +340,12 @@ const getCorsOptions = () => {
       // Allow requests with no origin (mobile, curl requests)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
+      } else if (isDev && /^http:\/\/localhost:\d+$/.test(origin)) {
+        callback(null, true);
       } else {
         log.warn('CORS request from unauthorized origin', {
           origin,
-          allowedOrigins,
-          ip: req?.ip
+          allowedOrigins
         });
 
         callback(new Error('Not allowed by CORS'));
