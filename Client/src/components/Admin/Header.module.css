@@ -3,9 +3,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: #1F2937;
-  border-bottom: 1px solid #374151;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  background: #1E293B;
+  border-bottom: 1px solid #334155;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -14,22 +14,22 @@
 .menuButton {
   font-size: 1.2rem;
   border: none;
-  background: #374151;
+  background: #334155;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
-  color: #F9FAFB;
+  color: #E2E8F0;
 }
 
 .menuButton:hover {
-  background: #4B5563;
+  background: #475569;
 }
 
 .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #F9FAFB;
+  color: #E2E8F0;
 }
 
 .profile {
@@ -42,7 +42,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #3B82F6;
+  background: #8B5CF6;
   color: #ffffff;
   display: grid;
   place-items: center;
@@ -57,17 +57,17 @@
 
 .name {
   font-weight: 600;
-  color: #F9FAFB;
+  color: #E2E8F0;
 }
 
 .role {
   font-size: 0.8rem;
-  color: #9CA3AF;
+  color: #94A3B8;
 }
 
 .logout {
   border: none;
-  background: #3B82F6;
+  background: #8B5CF6;
   color: #ffffff;
   padding: 8px 14px;
   border-radius: 8px;
@@ -76,7 +76,7 @@
 }
 
 .logout:hover {
-  background: #2563EB;
+  background: #6366F1;
   transform: translateY(-1px);
 }
 

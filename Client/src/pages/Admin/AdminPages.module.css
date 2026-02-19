@@ -1,18 +1,18 @@
 .page {
-  background: #374151;
+  background: #1E293B;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-  border: 1px solid #4B5563;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid #334155;
 }
 
 .page h1 {
   margin: 0 0 12px;
   font-size: 1.6rem;
-  color: #3B82F6;
+  color: #8B5CF6;
 }
 
 .page p {
   margin: 0;
-  color: #E5E7EB;
+  color: #CBD5E1;
 }
