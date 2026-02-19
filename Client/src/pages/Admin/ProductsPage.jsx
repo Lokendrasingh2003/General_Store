@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductsList.module.css';
+import ConfirmDeleteModal from '../../components/Admin/ConfirmDeleteModal.jsx';
 
 const CATEGORIES = [
   { value: '', label: 'All Categories' },
@@ -19,10 +20,19 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    productId: null,
+    productName: null
+  });
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch products
   useEffect(() => {
@@ -99,11 +109,56 @@ const ProductsPage = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const handleDelete = (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      // TODO: Implement delete functionality
-      console.log('Deleting product:', productId);
+  const handleDelete = (productId, productName) => {
+    setDeleteModal({
+      isOpen: true,
+      productId,
+      productName
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.productId) return;
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `http://localhost:5000/api/v1/products/${deleteModal.productId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove product from list
+        setProducts(prev => prev.filter(p => p._id !== deleteModal.productId));
+        setSuccess(`"${deleteModal.productName}" deleted successfully!`);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(null), 3000);
+        
+        // Close modal
+        setDeleteModal({ isOpen: false, productId: null, productName: null });
+      } else {
+        setError(result.message || 'Failed to delete product');
+      }
+    } catch (err) {
+      setError('Error deleting product: ' + err.message);
+      console.error('Delete error:', err);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModal({ isOpen: false, productId: null, productName: null });
   };
 
   const getCategoryLabel = (category) => {
@@ -126,6 +181,9 @@ const ProductsPage = () => {
         </div>
         <button className={styles.addBtn} onClick={() => navigate('/admin/products/add')}>+ Add New Product</button>
       </div>
+
+      {error && <div className={styles.errorAlert}>{error}</div>}
+      {success && <div className={styles.successAlert}>{success}</div>}
 
       {/* Filters and Search */}
       <div className={styles.filterSection}>
@@ -254,7 +312,8 @@ const ProductsPage = () => {
                         <button
                           className={styles.btnDelete}
                           title="Delete"
-                          onClick={() => handleDelete(product._id)}
+                          onClick={() => handleDelete(product._id, product.name)}
+                          disabled={deleting}
                         >
                           🗑️
                         </button>
@@ -306,6 +365,17 @@ const ProductsPage = () => {
           )}
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        title="Delete Product"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        itemName={deleteModal.productName}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        isLoading={deleting}
+      />
     </div>
   );
 };
