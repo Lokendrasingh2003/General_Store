@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MainHeader from '../components/Header/MainHeader';
 import SmartBasketCard from '../components/Home/SmartBasketCard';
 import { DEMO_CATEGORY_PRODUCTS } from '../data/demoProducts';
+import { getProductsByCategory } from '../services/productsApi';
 
 const CATEGORY_SLUGS = ['kitchen', 'snacks', 'beauty', 'bakery', 'household'];
 const CATEGORY_LABELS = {
@@ -51,8 +52,8 @@ const CategorySection = ({ title, slug, products, scrollRefSetter, onScrollLeft,
         ref={scrollRefSetter}
         className="mt-4 flex gap-3 overflow-x-auto pb-2 scroll-smooth md:gap-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        {products.map((product) => (
-          <SmartBasketCard key={product._id} product={product} compact />
+        {products.map((product, index) => (
+          <SmartBasketCard key={`${slug}-${product._id}-${index}`} product={product} compact />
         ))}
       </div>
     </section>
@@ -61,6 +62,7 @@ const CategorySection = ({ title, slug, products, scrollRefSetter, onScrollLeft,
 
 const HomePage = () => {
   const scrollRefs = useRef({});
+  const [categoryProducts, setCategoryProducts] = useState(DEMO_CATEGORY_PRODUCTS);
 
   const setScrollEl = (slug) => (el) => {
     if (el) scrollRefs.current[slug] = el;
@@ -73,29 +75,101 @@ const HomePage = () => {
     el.scrollBy({ left: dir === 'left' ? -step : step, behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      try {
+        const results = await Promise.all(
+          CATEGORY_SLUGS.map(async (slug) => [slug, await getProductsByCategory(slug)]),
+        );
+
+        if (cancelled) return;
+
+        const mapped = Object.fromEntries(
+          results.map(([slug, products]) => [slug, Array.isArray(products) && products.length > 0 ? products : (DEMO_CATEGORY_PRODUCTS[slug] || [])]),
+        );
+
+        setCategoryProducts(mapped);
+      } catch {
+        if (!cancelled) {
+          setCategoryProducts(DEMO_CATEGORY_PRODUCTS);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-stone-50">
       <MainHeader />
 
-      {/* 5 category sections - demo data, API later */}
+      {/* Animated Category Cards */}
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+          {CATEGORY_SLUGS.map((slug, index) => {
+            const categoryColors = {
+              kitchen: { bg: 'bg-orange-100', border: 'border-orange-200', text: 'text-orange-700', icon: 'text-lg sm:text-xl' },
+              bakery: { bg: 'bg-amber-100', border: 'border-amber-200', text: 'text-amber-700', icon: 'text-lg sm:text-xl' },
+              snacks: { bg: 'bg-purple-100', border: 'border-purple-200', text: 'text-purple-700', icon: 'text-lg sm:text-xl' },
+              beauty: { bg: 'bg-rose-100', border: 'border-rose-200', text: 'text-rose-700', icon: 'text-lg sm:text-xl' },
+              household: { bg: 'bg-cyan-100', border: 'border-cyan-200', text: 'text-cyan-700', icon: 'text-lg sm:text-xl' },
+            };
+            const colors = categoryColors[slug];
+
+            return (
+              <Link
+                key={slug}
+                to={`/category/${slug}`}
+                className={`group relative overflow-hidden rounded-lg border ${colors.bg} ${colors.border} transition-all duration-300 hover:shadow-sm`}
+                style={{ animation: `slideUp 0.5s ease-out ${index * 0.08}s backwards` }}
+              >
+                <div className="relative h-16 sm:h-20 flex flex-col items-center justify-center p-2 sm:p-3">
+                  {/* Icon */}
+                  <div className={`${colors.icon} mb-1`}>
+                    {
+                      {
+                        kitchen: '🍳',
+                        bakery: '🥐',
+                        snacks: '🍿',
+                        beauty: '💄',
+                        household: '🧹',
+                      }[slug]
+                    }
+                  </div>
+                  {/* Category Name */}
+                  <h3 className={`text-center font-semibold text-[10px] sm:text-xs ${colors.text}`}>
+                    {CATEGORY_LABELS[slug]}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 5 category sections */}
       {CATEGORY_SLUGS.map((slug) => (
         <CategorySection
           key={slug}
           title={`${CATEGORY_LABELS[slug]} Smart Basket`}
           slug={slug}
-          products={DEMO_CATEGORY_PRODUCTS[slug] || []}
+          products={categoryProducts[slug] || DEMO_CATEGORY_PRODUCTS[slug] || []}
           scrollRefSetter={setScrollEl(slug)}
           onScrollLeft={() => scroll(slug, 'left')}
           onScrollRight={() => scroll(slug, 'right')}
         />
       ))}
 
-      
-
       {/* Benefits */}
       <section className="border-y border-stone-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-10 grid-cols-2 lg:grid-cols-4">
             <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100 text-primary-600">
                 <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +213,7 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="border-t border-stone-200 bg-stone-900 text-stone-300">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-10 grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <Link to="/" className="font-display text-xl font-bold tracking-tight text-white">
@@ -173,6 +247,25 @@ const HomePage = () => {
                 ))}
               </ul>
             </div>
+            {/* Contact Details */}
+            <div>
+              <h4 className="font-semibold uppercase tracking-wider text-white">Contact Us</h4>
+              <ul className="mt-4 space-y-2.5">
+                <li className="text-sm text-stone-400">
+                  <span className="font-semibold text-white">Phone:</span> +91 9876 543 210
+                </li>
+                <li className="text-sm text-stone-400">
+                  <span className="font-semibold text-white">Email:</span> support@generalstore.com
+                </li>
+                <li className="text-sm text-stone-400">
+                  <span className="font-semibold text-white">Address:</span> 123 Market Street, City Center, State 110001
+                </li>
+                <li className="text-sm text-stone-400 mt-4">
+                  <span className="font-semibold text-white">Hours:</span>
+                  <br />7 AM - 11 PM Daily
+                </li>
+              </ul>
+            </div>
           </div>
           {/* Bottom bar */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-stone-700 pt-8 sm:flex-row">
@@ -185,6 +278,31 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+        .animate-bounce {
+          animation: bounce 2s infinite;
+        }
+      `}</style>
     </div>
   );
 };

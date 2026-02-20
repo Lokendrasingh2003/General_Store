@@ -1,17 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import AdminLayout from './components/Admin/AdminLayout.jsx';
-import AdminRoute from './components/Admin/AdminRoute.jsx';
-import DashboardPage from './pages/Admin/DashboardPage.jsx';
-import ProductsPage from './pages/Admin/ProductsPage.jsx';
-import CategoriesPage from './pages/Admin/CategoriesPage.jsx';
-import OrdersPage from './pages/Admin/OrdersPage.jsx';
-import SettingsPage from './pages/Admin/SettingsPage.jsx';
-import AdminLoginPage from './pages/HomePage.jsx';
 import HomePage from './main-ui/pages/HomePage.jsx';
 import SignInPage from './main-ui/pages/SignInPage.jsx';
 import SignUpPage from './main-ui/pages/SignUpPage.jsx';
+import ForgotPasswordPage from './main-ui/pages/ForgotPasswordPage.jsx';
 import CategoryPage from './main-ui/pages/CategoryPage.jsx';
 import CartPage from './main-ui/pages/CartPage.jsx';
+import CheckoutPage from './main-ui/pages/CheckoutPage.jsx';
+import ProfilePage from './main-ui/pages/ProfilePage.jsx';
+import OrderDetailPage from './main-ui/pages/OrderDetailPage.jsx';
+import AdminDashboard from './main-ui/pages/admin/AdminDashboard.jsx';
+import AdminProducts from './main-ui/pages/admin/AdminProducts.jsx';
+import AdminOrders from './main-ui/pages/admin/AdminOrders.jsx';
+import AdminUsers from './main-ui/pages/admin/AdminUsers.jsx';
 
 const App = () => {
   return (
@@ -19,23 +19,19 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/category/:category" element={<CategoryPage />} />
       <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/orders/:orderId" element={<OrderDetailPage />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <AdminLayout />
-          </AdminRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="categories" element={<CategoriesPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/products" element={<AdminProducts />} />
+      <Route path="/admin/orders" element={<AdminOrders />} />
+      <Route path="/admin/users" element={<AdminUsers />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

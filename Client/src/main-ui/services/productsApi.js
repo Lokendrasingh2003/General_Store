@@ -16,6 +16,15 @@ export const getProducts = async (params = {}) => {
   return data?.data ?? data ?? [];
 };
 
+export const getProductSuggestions = async (params = {}) => {
+  const search = new URLSearchParams(params).toString();
+  const url = `${API_BASE}/api/products/suggestions${search ? `?${search}` : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch suggestions');
+  const data = await res.json();
+  return data?.data ?? data ?? [];
+};
+
 export const getProductsByCategory = async (category) => {
   const res = await fetch(`${API_BASE}/api/products/category/${encodeURIComponent(category)}`);
   if (!res.ok) throw new Error('Failed to fetch products');

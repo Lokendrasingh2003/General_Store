@@ -23,12 +23,15 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product, quantity = 1, selectedWeight = null) => {
+    const effectivePrice = Number(product.discountedPrice ?? product.price ?? 0);
+    const effectiveOriginalPrice = Number(product.originalPrice ?? product.price ?? effectivePrice);
+
     const cartItem = {
       _id: product._id,
       name: product.name,
       brand: product.brand,
-      price: product.discountedPrice || product.price,
-      originalPrice: product.price,
+      price: effectivePrice,
+      originalPrice: effectiveOriginalPrice,
       image: product.images?.[0] || 'https://dummyimage.com/600x400/e2e8f0/64748b.png&text=No+Image',
       category: product.category,
       weight: selectedWeight || product.weight || product.size,
