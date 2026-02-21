@@ -5,8 +5,30 @@
 
 const fs = require('fs');
 const path = require('path');
-const AWS = require('aws-sdk');
-const cloudinary = require('cloudinary').v2;
+let AWS = null;
+let cloudinary = null;
+
+const getAwsSdk = () => {
+  if (AWS) return AWS;
+  try {
+    // eslint-disable-next-line global-require
+    AWS = require('aws-sdk');
+    return AWS;
+  } catch (error) {
+    throw new Error('aws-sdk is not installed. Install it or switch STORAGE_TYPE to local.');
+  }
+};
+
+const getCloudinary = () => {
+  if (cloudinary) return cloudinary;
+  try {
+    // eslint-disable-next-line global-require
+    cloudinary = require('cloudinary').v2;
+    return cloudinary;
+  } catch (error) {
+    throw new Error('cloudinary is not installed. Install it or switch STORAGE_TYPE to local.');
+  }
+};
 
 /**
  * Initialize Cloud Storage Based on Environment
@@ -15,13 +37,15 @@ const initializeCloudStorage = () => {
   const storageType = process.env.STORAGE_TYPE;
 
   if (storageType === 's3') {
-    AWS.config.update({
+    const AwsSdk = getAwsSdk();
+    AwsSdk.config.update({
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       region: process.env.AWS_REGION || 'us-east-1'
     });
   } else if (storageType === 'cloudinary') {
-    cloudinary.config({
+    const CloudinarySdk = getCloudinary();
+    CloudinarySdk.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET
@@ -42,8 +66,8 @@ const uploadLocalImage = async (file, folder = 'products') => {
   // File is already saved by multer
   const filename = file.filename;
   const relativePath = `uploads/${folder}/${filename}`;
-  // Use /images path that matches the static file serving in server.js
-  const publicUrl = `${process.env.API_BASE_URL || 'http://localhost:5000'}/images/${folder}/${filename}`;
+  // Use /uploads path to match the static file serving in app.js
+  const publicUrl = `${process.env.API_BASE_URL || 'http://localhost:5000'}/uploads/${folder}/${filename}`;
 
   return {
     filename,
@@ -62,7 +86,8 @@ const uploadToS3 = async (file, folder = 'products') => {
     throw new Error('No file provided');
   }
 
-  const s3 = new AWS.S3();
+  const AwsSdk = getAwsSdk();
+  const s3 = new AwsSdk.S3();
   const timestamp = Date.now();
   const random = Math.round(Math.random() * 1e9);
   const filename = `${folder}/${Date.now()}-${random}${path.extname(file.originalname)}`;
@@ -101,7 +126,8 @@ const uploadToCloudinary = async (file, folder = 'products') => {
   }
 
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
+    const CloudinarySdk = getCloudinary();
+    const uploadStream = CloudinarySdk.uploader.upload_stream(
       {
         folder: `general-store/${folder}`,
         resource_type: 'auto',
@@ -160,7 +186,8 @@ const deleteImage = async (imageUrl, cloudinaryId = null) => {
   try {
     switch (storageType) {
       case 's3': {
-        const s3 = new AWS.S3();
+        const AwsSdk = getAwsSdk();
+        const s3 = new AwsSdk.S3();
         const key = imageUrl.split(process.env.AWS_S3_BUCKET + '/')[1];
         await s3.deleteObject({
           Bucket: process.env.AWS_S3_BUCKET,
@@ -173,7 +200,8 @@ const deleteImage = async (imageUrl, cloudinaryId = null) => {
         if (!cloudinaryId) {
           throw new Error('Cloudinary ID required for deletion');
         }
-        await cloudinary.uploader.destroy(cloudinaryId);
+        const CloudinarySdk = getCloudinary();
+        await CloudinarySdk.uploader.destroy(cloudinaryId);
         return { success: true, message: 'Image deleted from Cloudinary' };
       }
 

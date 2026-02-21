@@ -1,224 +1,181 @@
-import { Box, Container, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MainHeader from '../components/Header/MainHeader.jsx';
-import { useCart } from '../../context/CartContext.jsx';
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import MainHeader from '../components/Header/MainHeader';
+import { useCart } from '../../context/CartContext';
+
+const FREE_DELIVERY_THRESHOLD = 499;
+const STANDARD_DELIVERY_FEE = 40;
 
 const CartPage = () => {
-  const { cartItems, removeFromCart, updateQuantity, getTotalPrice, getTotalItems } = useCart();
-  const [promo, setPromo] = useState('');
+  const { cartItems, getTotalPrice, removeFromCart, updateQuantity, clearCart } = useCart();
+  const total = getTotalPrice();
+  const itemCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
-  const totalPrice = getTotalPrice();
-  const totalItems = getTotalItems();
-  const deliveryCharge = totalPrice > 500 ? 0 : 50;
-  const gstAmount = Math.round(totalPrice * 0.05);
-  const finalTotal = totalPrice + gstAmount + deliveryCharge;
+  const originalSubtotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.originalPrice || item.price || 0) * item.quantity,
+    0
+  );
 
-  const handleQuantityChange = (productId, weight, newQuantity) => {
-    if (newQuantity > 0) {
-      updateQuantity(productId, weight, newQuantity);
-    }
-  };
-
-  const handleRemove = (productId, weight) => {
-    removeFromCart(productId, weight);
-  };
-
-  if (cartItems.length === 0) {
-    return (
-      <Box sx={{ pb: 4 }}>
-        <MainHeader />
-        <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
-              Your Cart is Empty
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Start shopping now and add items to your cart!
-            </Typography>
-            <Button variant="contained" color="success" component={RouterLink} to="/">
-              Continue Shopping
-            </Button>
-          </Box>
-        </Container>
-      </Box>
-    );
-  }
+  const savings = Math.max(0, originalSubtotal - total);
+  const remainingForFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - total);
+  const deliveryFee = remainingForFreeDelivery > 0 ? STANDARD_DELIVERY_FEE : 0;
+  const finalPayable = total + deliveryFee;
+  const freeDeliveryProgress = Math.min(100, Math.round((total / FREE_DELIVERY_THRESHOLD) * 100));
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <div className="min-h-screen bg-stone-50">
       <MainHeader />
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 3 }}>
-          Shopping Cart ({totalItems} items)
-        </Typography>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="font-display text-3xl font-bold text-stone-900">Shopping Cart</h1>
+          {cartItems.length > 0 && (
+            <button
+              type="button"
+              onClick={clearCart}
+              className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
+            >
+              Clear cart
+            </button>
+          )}
+        </div>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-          {/* Cart Items */}
-          <Box flex={{ xs: 1, md: 2 }}>
-            <TableContainer component={Paper} variant="outlined">
-              <Table>
-                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Product</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>Weight</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>Price</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>Qty</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>Total</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {cartItems.map((item) => (
-                    <TableRow key={`${item._id}-${item.weight}`} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                          <Box component="img" src={item.image} alt={item.name} sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
-                          <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                              {item.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {item.brand}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2">{item.weight}</Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'success.main' }}>
-                          ₹{item.price}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            sx={{ minWidth: 'auto', width: 32, height: 32, p: 0 }}
-                            onClick={() => handleQuantityChange(item._id, item.weight, item.quantity - 1)}
+        {cartItems.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-12 text-center shadow-sm">
+            <p className="text-stone-600">Your cart is empty.</p>
+            <Link to="/" className="mt-4 inline-block font-medium text-primary-600 hover:underline">Continue shopping</Link>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <section className="space-y-4 lg:col-span-2">
+              <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                <p className="text-sm text-stone-600">
+                  {remainingForFreeDelivery > 0
+                    ? `Add ₹${remainingForFreeDelivery.toFixed(2)} more for free delivery`
+                    : 'You have unlocked free delivery'}
+                </p>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all"
+                    style={{ width: `${freeDeliveryProgress}%` }}
+                  />
+                </div>
+              </div>
+
+              {cartItems.map((item) => {
+                const unitPrice = Number(item.price || 0);
+                const unitOriginalPrice = Number(item.originalPrice || unitPrice);
+                const lineTotal = unitPrice * item.quantity;
+
+                return (
+                  <article
+                    key={`${item._id}-${item.weight}`}
+                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex gap-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-24 w-24 rounded-xl object-cover sm:h-28 sm:w-28"
+                      />
+
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <h3 className="line-clamp-2 font-semibold text-stone-900">{item.name}</h3>
+                        <p className="mt-1 text-xs text-stone-500">Brand: {item.brand}</p>
+                        {item.weight && <p className="text-xs text-stone-500">Weight: {item.weight}</p>}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-bold text-stone-900">₹{unitPrice.toFixed(2)}</span>
+                          {unitOriginalPrice > unitPrice && (
+                            <span className="text-xs text-stone-400 line-through">₹{unitOriginalPrice.toFixed(2)}</span>
+                          )}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          <div className="flex items-center rounded-lg border border-stone-300">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item._id, item.weight, item.quantity - 1)}
+                              className="px-3 py-1.5 text-sm hover:bg-stone-100"
+                            >
+                              −
+                            </button>
+                            <span className="w-10 text-center text-sm font-medium">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item._id, item.weight, item.quantity + 1)}
+                              className="px-3 py-1.5 text-sm hover:bg-stone-100"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(item._id, item.weight)}
+                            className="text-sm font-medium text-red-600 hover:underline"
                           >
-                            −
-                          </Button>
-                          <Typography sx={{ minWidth: 30, textAlign: 'center' }}>
-                            {item.quantity}
-                          </Typography>
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            sx={{ minWidth: 'auto', width: 32, height: 32, p: 0 }}
-                            onClick={() => handleQuantityChange(item._id, item.weight, item.quantity + 1)}
-                          >
-                            +
-                          </Button>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          ₹{item.price * item.quantity}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Button 
-                          variant="text" 
-                          color="error" 
-                          size="small"
-                          onClick={() => handleRemove(item._id, item.weight)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+                            Remove
+                          </button>
+                        </div>
+                      </div>
 
-          {/* Order Summary */}
-          <Box sx={{ flex: { xs: 1, md: 1 }, minWidth: 300 }}>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                Order Summary
-              </Typography>
+                      <div className="hidden text-right sm:block">
+                        <p className="text-sm text-stone-500">Item total</p>
+                        <p className="mt-1 text-base font-bold text-stone-900">₹{lineTotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
 
-              <Stack spacing={1.5} sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Subtotal ({totalItems} items)
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    ₹{totalPrice}
-                  </Typography>
-                </Box>
+            <aside className="lg:sticky lg:top-24 lg:self-start">
+              <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-stone-900">Order Summary</h2>
+                <p className="mt-1 text-sm text-stone-500">{itemCount} items</p>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Delivery Charge
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: deliveryCharge === 0 ? 'success.main' : 'text.primary' }}>
-                    {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
-                  </Typography>
-                </Box>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-600">Subtotal</span>
+                    <span className="font-medium text-stone-900">₹{originalSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-600">Discount</span>
+                    <span className="font-medium text-green-600">- ₹{savings.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-600">Delivery fee</span>
+                    <span className={`font-medium ${deliveryFee === 0 ? 'text-green-600' : 'text-stone-900'}`}>
+                      {deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}
+                    </span>
+                  </div>
+                </div>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    GST (5%)
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    ₹{gstAmount}
-                  </Typography>
-                </Box>
+                <div className="my-4 border-t border-stone-200" />
 
-                <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                    Total
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'success.main', fontSize: '1.2rem' }}>
-                    ₹{finalTotal}
-                  </Typography>
-                </Box>
-              </Stack>
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-semibold text-stone-900">Total</span>
+                  <span className="text-xl font-bold text-stone-900">₹{finalPayable.toFixed(2)}</span>
+                </div>
 
-              <Button variant="contained" color="success" fullWidth size="large" sx={{ mb: 2 }}>
-                Proceed to Checkout
-              </Button>
-              <Button variant="outlined" color="inherit" fullWidth component={RouterLink} to="/">
-                Continue Shopping
-              </Button>
-            </Paper>
+                <Link
+                  to="/checkout"
+                  className="mt-4 block w-full rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-primary-700"
+                >
+                  Proceed to Checkout
+                </Link>
 
-            {/* Promo Code */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mt: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                Have a Promo Code?
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <input 
-                  type="text" 
-                  value={promo}
-                  onChange={(e) => setPromo(e.target.value)}
-                  placeholder="Enter code"
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontFamily: 'inherit'
-                  }}
-                />
-                <Button variant="outlined" size="small">
-                  Apply
-                </Button>
-              </Box>
-            </Paper>
-          </Box>
-        </Stack>
-      </Container>
-    </Box>
+                <Link
+                  to="/"
+                  className="mt-3 block text-center text-sm font-medium text-primary-600 hover:underline"
+                >
+                  Continue shopping
+                </Link>
+              </div>
+            </aside>
+          </div>
+        )}
+      </main>
+    </div>
   );
 };
 

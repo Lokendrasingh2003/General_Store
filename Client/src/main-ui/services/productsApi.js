@@ -1,47 +1,40 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-const requestJson = async (url) => {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  return response.json();
+export const getCategories = async () => {
+  const res = await fetch(`${API_BASE}/api/products/categories`);
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  const data = await res.json();
+  return data?.data ?? data ?? [];
 };
 
-const normalizeProducts = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  return [];
+export const getProducts = async (params = {}) => {
+  const search = new URLSearchParams(params).toString();
+  const url = `${API_BASE}/api/products${search ? `?${search}` : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch products');
+  const data = await res.json();
+  return data?.data ?? data ?? [];
 };
 
-export const CATEGORY_ORDER = ['kitchen', 'snacks', 'beauty', 'bakery', 'household'];
-
-export const fetchProductsByCategory = async (category) => {
-  const normalizedCategory = String(category || '').toLowerCase().trim();
-
-  if (!normalizedCategory) {
-    return [];
-  }
-
-  try {
-    const payload = await requestJson(`${API_BASE_URL}/api/products/category/${normalizedCategory}`);
-    return normalizeProducts(payload);
-  } catch (error) {
-    const fallbackPayload = await requestJson(`${API_BASE_URL}/api/products?category=${encodeURIComponent(normalizedCategory)}`);
-    return normalizeProducts(fallbackPayload);
-  }
+export const getProductSuggestions = async (params = {}) => {
+  const search = new URLSearchParams(params).toString();
+  const url = `${API_BASE}/api/products/suggestions${search ? `?${search}` : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch suggestions');
+  const data = await res.json();
+  return data?.data ?? data ?? [];
 };
 
-export const fetchHomeCategoryProducts = async (limitPerCategory = 8) => {
-  const entries = await Promise.all(
-    CATEGORY_ORDER.map(async (category) => {
-      const products = await fetchProductsByCategory(category);
-      return [category, products.slice(0, limitPerCategory)];
-    })
-  );
+export const getProductsByCategory = async (category) => {
+  const res = await fetch(`${API_BASE}/api/products/category/${encodeURIComponent(category)}`);
+  if (!res.ok) throw new Error('Failed to fetch products');
+  const data = await res.json();
+  return data?.data ?? data ?? [];
+};
 
-  return Object.fromEntries(entries);
+export const getProductById = async (id) => {
+  const res = await fetch(`${API_BASE}/api/products/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch product');
+  const data = await res.json();
+  return data?.data ?? data;
 };

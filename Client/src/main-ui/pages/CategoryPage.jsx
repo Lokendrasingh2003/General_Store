@@ -1,73 +1,90 @@
-import { Alert, Box, CircularProgress, Container, Grid, Typography } from '@mui/material';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import MainHeader from '../components/Header/MainHeader.jsx';
-import ProductCard from '../components/Product/ProductCard.jsx';
-import { CATEGORY_ORDER, fetchProductsByCategory } from '../services/productsApi.js';
-
-const categoryLabel = (value) => value.charAt(0).toUpperCase() + value.slice(1);
+import MainHeader from '../components/Header/MainHeader';
+import { DEMO_CATEGORY_PRODUCTS } from '../data/demoProducts';
+import SmartBasketCard from '../components/Home/SmartBasketCard';
+import { getProducts, getProductsByCategory } from '../services/productsApi';
 
 const CategoryPage = () => {
   const { category } = useParams();
-  const selectedCategory = String(category || '').toLowerCase();
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  const normalizedCategory = (category || '').toLowerCase();
+  const searchQuery = (searchParams.get('search') || '').trim();
+  const isSearchMode = searchQuery.length > 0;
+  const [products, setProducts] = useState(DEMO_CATEGORY_PRODUCTS[normalizedCategory] || []);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const run = async () => {
-      if (!CATEGORY_ORDER.includes(selectedCategory)) {
-        setError('Invalid category.');
-        setIsLoading(false);
-        return;
-      }
+    let cancelled = false;
 
+    const loadProducts = async () => {
+      setLoading(true);
       try {
-        setError('');
-        setIsLoading(true);
-        const data = await fetchProductsByCategory(selectedCategory);
-        setProducts(data);
-      } catch (apiError) {
-        setError('Category products load nahi ho pa rahe.');
+        const apiProducts = isSearchMode
+          ? await getProducts({
+              search: searchQuery,
+              ...(normalizedCategory !== 'all' ? { category: normalizedCategory } : {}),
+            })
+          : await getProductsByCategory(normalizedCategory);
+
+        const fallbackProducts = normalizedCategory === 'all'
+          ? []
+          : (DEMO_CATEGORY_PRODUCTS[normalizedCategory] || []);
+
+        if (!cancelled) {
+          setProducts(
+            Array.isArray(apiProducts) && apiProducts.length > 0
+              ? apiProducts
+              : fallbackProducts,
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setProducts(normalizedCategory === 'all' ? [] : (DEMO_CATEGORY_PRODUCTS[normalizedCategory] || []));
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    run();
-  }, [selectedCategory]);
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSearchMode, normalizedCategory, searchQuery]);
+
+  const title = isSearchMode
+    ? `Search results for "${searchQuery}"`
+    : normalizedCategory
+      ? `${normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1)}`
+      : 'Category';
 
   return (
-    <Box sx={{ pb: { xs: 4, md: 6 } }}>
+    <div className="min-h-screen bg-stone-50">
       <MainHeader />
-
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, textTransform: 'capitalize', mb: 0.7 }}>
-          {categoryLabel(selectedCategory)} Products
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.2 }}>
-          Total items: {products.length}
-        </Typography>
-
-        {isLoading ? (
-          <Box sx={{ py: 7, display: 'grid', placeItems: 'center' }}>
-            <CircularProgress color="success" />
-          </Box>
-        ) : null}
-
-        {!isLoading && error ? <Alert severity="error">{error}</Alert> : null}
-
-        {!isLoading && !error ? (
-          <Grid container spacing={{ xs: 2, sm: 3 }}>
-            {products.map((product) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product._id || product.name}>
-                <ProductCard product={product} fluid />
-              </Grid>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <Link to="/" className="text-sm text-stone-500 hover:text-stone-900">← Home</Link>
+        <h1 className="mt-4 font-display text-3xl font-bold text-stone-900">{title}</h1>
+        {loading ? (
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={item} className="h-56 animate-pulse rounded-xl bg-stone-200" />
             ))}
-          </Grid>
-        ) : null}
-      </Container>
-    </Box>
+          </div>
+        ) : products.length > 0 ? (
+          <div key={normalizedCategory} className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
+            {products.map((p, index) => (
+              <SmartBasketCard key={`${normalizedCategory}-${p._id}-${index}`} product={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-8 text-stone-500">
+            {isSearchMode ? 'No products found for this search.' : 'No products in this category.'}
+          </p>
+        )}
+      </main>
+    </div>
   );
 };
 
