@@ -11,7 +11,9 @@ import OrderDetailPage from './main-ui/pages/OrderDetailPage.jsx';
 import AdminDashboard from './main-ui/pages/admin/AdminDashboard.jsx';
 import AdminProducts from './main-ui/pages/admin/AdminProducts.jsx';
 import AdminOrders from './main-ui/pages/admin/AdminOrders.jsx';
+import AdminOrderDetails from './main-ui/pages/admin/AdminOrderDetails.jsx';
 import AdminUsers from './main-ui/pages/admin/AdminUsers.jsx';
+import AdminSignInPage from './main-ui/pages/admin/AdminSignInPage.jsx';
 
 const App = () => {
   return (
@@ -27,9 +29,11 @@ const App = () => {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Admin Routes */}
+      <Route path="/admin/login" element={<AdminSignInPage />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/products" element={<AdminProducts />} />
       <Route path="/admin/orders" element={<AdminOrders />} />
+      <Route path="/admin/orders/:orderId" element={<AdminOrderDetails />} />
       <Route path="/admin/users" element={<AdminUsers />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

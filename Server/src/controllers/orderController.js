@@ -1,7 +1,17 @@
 const { orders } = require('../data/orders');
 
 const createOrder = (req, res) => {
-  const { items = [], address, paymentMethod } = req.body || {};
+  const { items = [], address, paymentMethod, userId } = req.body || {};
+
+  console.log('📦 Creating order with userId:', userId);
+
+  if (!userId) {
+    console.log('❌ No userId provided');
+    return res.status(400).json({
+      success: false,
+      message: 'User ID is required',
+    });
+  }
 
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({
@@ -35,6 +45,7 @@ const createOrder = (req, res) => {
 
   const order = {
     id: orderId,
+    userId: userId,
     createdAt: new Date().toISOString(),
     status: 'pending',
     paymentMethod: paymentMethod || 'cod',
@@ -50,6 +61,7 @@ const createOrder = (req, res) => {
   };
 
   orders.unshift(order);
+  console.log('✅ Order created:', orderId, 'Total orders in system:', orders.length);
 
   return res.status(201).json({
     success: true,
@@ -62,6 +74,30 @@ const getOrders = (_req, res) => {
   res.json({
     success: true,
     data: orders,
+  });
+};
+
+const getCustomerOrders = (req, res) => {
+  const userId = req.user?.id || req.query.userId;
+  
+  console.log('🔍 Fetching orders for userId:', userId);
+  console.log('📊 Total orders in system:', orders.length);
+  
+  if (!userId) {
+    console.log('❌ No userId provided');
+    return res.status(400).json({
+      success: false,
+      message: 'User ID is required',
+    });
+  }
+  
+  const customerOrders = orders.filter((order) => order.userId === userId);
+  console.log('✅ Found', customerOrders.length, 'orders for this user');
+  console.log('🔗 All order userIds in system:', orders.map(o => o.userId));
+  
+  res.json({
+    success: true,
+    data: customerOrders,
   });
 };
 
@@ -113,6 +149,7 @@ const cancelOrder = (req, res) => {
 module.exports = {
   createOrder,
   getOrders,
+  getCustomerOrders,
   getOrderById,
   cancelOrder,
 };

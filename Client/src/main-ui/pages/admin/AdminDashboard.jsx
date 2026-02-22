@@ -15,10 +15,10 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Check if user is admin
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole !== 'admin') {
       showToast('Access denied. Admin only.', 'error');
-      setTimeout(() => navigate('/'), 1500);
+      setTimeout(() => navigate('/admin/login'), 1500);
       return;
     }
 
@@ -86,10 +86,10 @@ const AdminDashboard = () => {
           </div>
           <button
             onClick={() => {
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('userId');
-              localStorage.removeItem('userRole');
-              navigate('/sign-in');
+              localStorage.removeItem('adminAuthToken');
+              localStorage.removeItem('adminUserId');
+              localStorage.removeItem('adminRole');
+              navigate('/admin/login');
             }}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
           >
@@ -161,43 +161,83 @@ const AdminDashboard = () => {
         </section>
 
         {/* Recent Orders */}
-        <section className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-display text-xl font-bold text-stone-900">Recent Orders</h2>
-            <Link to="/admin/orders" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+        <section className="mt-8">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-slate-500">Quick View</p>
+              <h2 className="mt-1 font-display text-2xl font-bold text-slate-900">Recent Orders</h2>
+            </div>
+            <Link to="/admin/orders" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
               View All →
             </Link>
           </div>
 
-          <div className="mt-4 overflow-x-auto">
+          <div className="overflow-hidden rounded-xl shadow-sm border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200">
-                  <th className="px-4 py-3 text-left font-semibold text-stone-700">Order ID</th>
-                  <th className="px-4 py-3 text-left font-semibold text-stone-700">Amount</th>
-                  <th className="px-4 py-3 text-left font-semibold text-stone-700">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-stone-700">Date</th>
+                <tr style={{ backgroundColor: '#1f2937' }}>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Order ID</th>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Customer</th>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Phone</th>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Amount</th>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Status</th>
+                  <th style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', padding: '0.75rem 1rem', textAlign: 'left' }}>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.slice(0, 5).map((order) => (
-                  <tr key={order.id} className="border-b border-stone-100 hover:bg-stone-50">
-                    <td className="px-4 py-3 font-medium text-stone-900">{order.id}</td>
-                    <td className="px-4 py-3">₹{order.pricing?.grandTotal?.toFixed(2) || 0}</td>
-                    <td className="px-4 py-3">
+                  <tr
+                    key={order.id}
+                    style={{
+                      borderBottom: '1px solid #e2e8f0',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    className="hover:shadow-md"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    onClick={() => navigate('/admin/orders')}
+                  >
+                    <td style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem', padding: '0.5rem 1rem' }}>{order.id}</td>
+                    <td style={{ color: '#334155', fontSize: '0.95rem', padding: '0.5rem 1rem' }}>{order.address?.fullName}</td>
+                    <td style={{ color: '#64748b', fontSize: '0.95rem', padding: '0.5rem 1rem' }}>{order.address?.phone || '-'}</td>
+                    <td style={{ fontWeight: 700, color: '#059669', fontSize: '0.95rem', padding: '0.5rem 1rem' }}>₹{order.pricing?.grandTotal?.toFixed(2) || 0}</td>
+                    <td style={{ padding: '0.5rem 1rem' }}>
                       <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                          order.status === 'pending'
-                            ? 'bg-amber-100 text-amber-700'
-                            : order.status === 'delivered'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700'
-                        }`}
+                        style={{
+                          display: 'inline-block',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          backgroundColor: {
+                            pending: '#fef3c7',
+                            confirmed: '#dbeafe',
+                            packed: '#cffafe',
+                            shipped: '#e0e7ff',
+                            out_for_delivery: '#fed7aa',
+                            delivered: '#dcfce7',
+                            cancelled: '#fee2e2',
+                          }[order.status] || '#f1f5f9',
+                          color: {
+                            pending: '#92400e',
+                            confirmed: '#0c4a6e',
+                            packed: '#164e63',
+                            shipped: '#3730a3',
+                            out_for_delivery: '#9a3412',
+                            delivered: '#166534',
+                            cancelled: '#7f1d1d',
+                          }[order.status] || '#475569',
+                        }}
                       >
-                        {order.status}
+                        {order.status.replace(/_/g, ' ').toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td style={{ color: '#64748b', fontSize: '0.95rem', padding: '0.5rem 1rem' }}>
                       {new Date(order.createdAt).toLocaleDateString('en-IN')}
                     </td>
                   </tr>
