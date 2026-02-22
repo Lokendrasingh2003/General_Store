@@ -58,11 +58,6 @@ const SignInPage = () => {
         localStorage.setItem('userEmail', response.email);
       }
       
-      // Clear admin auth if exists
-      localStorage.removeItem('adminAuthToken');
-      localStorage.removeItem('adminUserId');
-      localStorage.removeItem('adminRole');
-      
       console.log('✅ Login successful - tokens stored');
       // Dispatch custom event to notify header of auth change
       window.dispatchEvent(new Event('authChange'));
