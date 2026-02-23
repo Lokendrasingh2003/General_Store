@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../../context/CartContext';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getProductSuggestions } from '../../services/productsApi';
 import ToastMessage from '../common/ToastMessage';
 import { useTimedToast } from '../../hooks/useTimedToast';
@@ -34,22 +34,11 @@ const MainHeader = () => {
   const updateAuthState = () => {
     const token = localStorage.getItem('authToken');
     const name = localStorage.getItem('userName');
-    const adminRole = localStorage.getItem('adminRole');
-    
-    console.log('📱 Header auth update - authToken:', !!token, 'userName:', name);
-    
-    // If admin is logged in, don't show customer UI
-    if (adminRole === 'admin') {
-      setAuthUser({
-        isAuthenticated: false,
-        name: ''
-      });
-    } else {
-      setAuthUser({
-        isAuthenticated: !!token,
-        name: name || ''
-      });
-    }
+
+    setAuthUser({
+      isAuthenticated: !!token,
+      name: name || ''
+    });
   };
 
   // Check authentication on component mount
@@ -67,7 +56,6 @@ const MainHeader = () => {
   // Listen for real-time storage changes
   useEffect(() => {
     const handleAuthChange = () => {
-      console.log('✅ Auth change event received');
       updateAuthState();
     };
 
