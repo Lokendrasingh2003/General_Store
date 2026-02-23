@@ -2,7 +2,14 @@ const { addresses } = require('../data/addresses');
 
 const saveAddress = (req, res) => {
   try {
-    const { label, name, phone, line1, city, state, pincode, isDefault } = req.body;
+    const { label, name, phone, line1, city, state, pincode, isDefault, userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
 
     if (!label || !name || !phone || !line1 || !city || !state || !pincode) {
       return res.status(400).json({ error: 'All address fields are required' });
@@ -18,12 +25,15 @@ const saveAddress = (req, res) => {
 
     if (isDefault) {
       addresses.forEach((addr) => {
-        addr.isDefault = false;
+        if (addr.userId === userId) {
+          addr.isDefault = false;
+        }
       });
     }
 
     const newAddress = {
       id: `addr-${Date.now()}`,
+      userId: userId,
       label,
       name,
       phone,
@@ -58,12 +68,41 @@ const getAddresses = (req, res) => {
   }
 };
 
+const getCustomerAddresses = (req, res) => {
+  try {
+    const userId = req.user?.id || req.query.userId;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+    
+    const customerAddresses = addresses.filter((addr) => addr.userId === userId);
+    
+    res.status(200).json({
+      success: true,
+      data: customerAddresses,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const updateAddress = (req, res) => {
   try {
     const { addressId } = req.params;
-    const { label, name, phone, line1, city, state, pincode, isDefault } = req.body;
+    const { label, name, phone, line1, city, state, pincode, isDefault, userId } = req.body;
 
-    const address = addresses.find((a) => a.id === addressId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const address = addresses.find((a) => a.id === addressId && a.userId === userId);
     if (!address) {
       return res.status(404).json({ error: 'Address not found' });
     }
@@ -78,7 +117,9 @@ const updateAddress = (req, res) => {
 
     if (isDefault) {
       addresses.forEach((addr) => {
-        addr.isDefault = false;
+        if (addr.userId === userId) {
+          addr.isDefault = false;
+        }
       });
       address.isDefault = true;
     }
@@ -98,7 +139,16 @@ const updateAddress = (req, res) => {
 const deleteAddress = (req, res) => {
   try {
     const { addressId } = req.params;
-    const index = addresses.findIndex((a) => a.id === addressId);
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const index = addresses.findIndex((a) => a.id === addressId && a.userId === userId);
 
     if (index === -1) {
       return res.status(404).json({ error: 'Address not found' });
@@ -119,6 +169,7 @@ const deleteAddress = (req, res) => {
 module.exports = {
   saveAddress,
   getAddresses,
+  getCustomerAddresses,
   updateAddress,
   deleteAddress,
 };

@@ -25,10 +25,10 @@ const AdminUsers = () => {
   const { toast, showToast } = useTimedToast(3000);
 
   useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole !== 'admin') {
       showToast('Access denied. Admin only.', 'error');
-      setTimeout(() => navigate('/'), 1500);
+      setTimeout(() => navigate('/admin/login'), 1500);
       return;
     }
 

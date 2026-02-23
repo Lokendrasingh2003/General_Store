@@ -10,13 +10,14 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phoneNumber: '',
     password: '',
     confirmPassword: '',
     agreeTerms: false
   });
   const [address, setAddress] = useState({
-    label: 'Home',
+    label: '',
     fullName: '',
     phone: '',
     line1: '',
@@ -32,6 +33,10 @@ const SignUpPage = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.email) newErrors.email = 'Email is required';
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Enter a valid email address';
+    }
     if (!formData.phoneNumber) newErrors.phoneNumber = 'Mobile number is required';
     if (formData.phoneNumber && !/^[0-9]{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
       newErrors.phoneNumber = 'Mobile number must be 10 digits';
@@ -70,7 +75,7 @@ const SignUpPage = () => {
     try {
       const response = await register({
         name: formData.name,
-        email: `${formData.phoneNumber}@general-store.local`,
+        email: formData.email,
         phone: formData.phoneNumber,
         password: formData.password,
         role: 'customer'
@@ -80,7 +85,7 @@ const SignUpPage = () => {
       if (address.line1 && address.line1.trim().length > 0) {
         try {
           await saveAddress({
-            label: address.label,
+            label: address.label || 'Home',
             name: address.fullName || formData.name,
             phone: address.phone || formData.phoneNumber,
             line1: address.line1,
@@ -101,11 +106,13 @@ const SignUpPage = () => {
         localStorage.setItem('userId', response.userId);
         localStorage.setItem('userName', response.name);
         localStorage.setItem('userRole', response.role);
+        localStorage.setItem('userPhone', formData.phoneNumber);
+        localStorage.setItem('userEmail', formData.email);
       }
 
       showToast('Account created successfully!', 'success');
       setTimeout(() => {
-        navigate('/');
+        navigate('/sign-in');
       }, 1500);
     } catch (err) {
       showToast(err.message || 'Registration failed. Please try again.', 'error');
@@ -131,7 +138,7 @@ const SignUpPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="mt-6 space-y-4">
             {/* Name Field */}
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-stone-700">
@@ -147,6 +154,24 @@ const SignUpPage = () => {
                 placeholder="John Doe"
               />
               {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-stone-700">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="off"
+                className={`mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.email ? 'border-red-300 focus:ring-red-200' : 'border-stone-300 focus:ring-primary-200'}`}
+                placeholder="you@example.com"
+              />
+              {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
             </div>
 
             {/* Mobile Number Field */}
@@ -181,6 +206,7 @@ const SignUpPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="new-password"
                 className={`mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.password ? 'border-red-300 focus:ring-red-200' : 'border-stone-300 focus:ring-primary-200'}`}
                 placeholder="••••••••"
               />
@@ -198,6 +224,7 @@ const SignUpPage = () => {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="new-password"
                 className={`mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${errors.confirmPassword ? 'border-red-300 focus:ring-red-200' : 'border-stone-300 focus:ring-primary-200'}`}
                 placeholder="••••••••"
               />

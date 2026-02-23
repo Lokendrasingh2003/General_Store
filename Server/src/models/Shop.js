@@ -100,7 +100,6 @@ const shopSchema = new mongoose.Schema(
 );
 
 // Indexes for faster queries
-shopSchema.index({ email: 1 });
 shopSchema.index({ ownerId: 1 });
 shopSchema.index({ type: 1 });
 shopSchema.index({ isActive: 1 });

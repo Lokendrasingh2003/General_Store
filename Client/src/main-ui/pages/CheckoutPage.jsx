@@ -5,7 +5,7 @@ import ToastMessage from '../components/common/ToastMessage';
 import { useCart } from '../../context/CartContext';
 import { useTimedToast } from '../hooks/useTimedToast';
 import { placeOrder } from '../services/ordersApi';
-import { getAddresses } from '../services/addressesApi';
+import { getAddresses, saveAddress } from '../services/addressesApi';
 
 const FREE_DELIVERY_THRESHOLD = 499;
 const STANDARD_DELIVERY_FEE = 40;
@@ -153,14 +153,40 @@ const CheckoutPage = () => {
 
     setIsPlacingOrder(true);
     try {
+      const userId = localStorage.getItem('userId');
+      
+      // Place the order
       await placeOrder({
         items: cartItems,
         address,
         paymentMethod,
+        userId,
       });
 
+      const shouldSaveAddress = !selectedAddressId;
+
+      // Automatically save the address only if it's not from saved addresses
+      if (shouldSaveAddress) {
+        try {
+          await saveAddress({
+            label: 'Delivery Address', // Add label for address
+            name: address.fullName,
+            phone: address.phone,
+            line1: address.line1,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            isDefault: savedAddresses.length === 0, // Make it default if no other addresses exist
+          });
+          console.log('✅ Address auto-saved to customer profile');
+        } catch (addressError) {
+          console.log('⚠️ Order placed but address save failed (non-critical):', addressError);
+          // Don't show error to user for address saving - order is what matters
+        }
+      }
+
       clearCart();
-      showOrderToast('Order placed successfully', 'success');
+      showOrderToast('Order placed successfully!', 'success');
       setTimeout(() => {
         navigate('/profile');
       }, 1500);
