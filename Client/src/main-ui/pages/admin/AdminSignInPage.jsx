@@ -35,6 +35,14 @@ const AdminSignInPage = () => {
       const response = await login({ email, password });
 
       if (response.accessToken) {
+        // Clear any existing customer auth
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userPhone');
+        localStorage.removeItem('userEmail');
+        
         // Set admin auth with separate keys
         localStorage.setItem('adminAuthToken', response.accessToken);
         localStorage.setItem('adminUserId', response.userId);
