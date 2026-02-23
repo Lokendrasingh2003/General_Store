@@ -93,10 +93,10 @@ const AdminProducts = () => {
   };
 
   useEffect(() => {
-    const adminRole = localStorage.getItem('adminRole');
-    if (adminRole !== 'admin') {
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'admin') {
       showToast('Access denied. Admin only.', 'error');
-      setTimeout(() => navigate('/admin/login'), 1500);
+      setTimeout(() => navigate('/'), 1500);
       return;
     }
 

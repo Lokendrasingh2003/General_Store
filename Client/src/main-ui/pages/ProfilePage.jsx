@@ -6,11 +6,95 @@ import { useTimedToast } from '../hooks/useTimedToast';
 import { cancelOrder, getOrders } from '../services/ordersApi';
 import { saveAddress, deleteAddress, getAddresses } from '../services/addressesApi';
 
-const emptyProfile = {
-  name: '',
-  phone: '',
-  email: '',
+const MOCK_PROFILE = {
+  name: 'Adesh Kumar',
+  phone: '+91 98765 43210',
+  email: 'adesh@example.com',
 };
+
+const MOCK_ADDRESSES = [
+  {
+    id: 'addr-1',
+    label: 'Home',
+    name: 'Adesh Kumar',
+    phone: '9876543210',
+    line1: 'House 22, MG Road',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    pincode: '452001',
+    isDefault: true,
+  },
+  {
+    id: 'addr-2',
+    label: 'Work',
+    name: 'Adesh Kumar',
+    phone: '9876543210',
+    line1: 'Tech Park, Tower B',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    pincode: '452010',
+    isDefault: false,
+  },
+];
+
+const MOCK_ORDERS = [
+  {
+    id: 'ORD-100245',
+    date: '20 Feb 2026',
+    status: 'Delivered',
+    total: 624,
+    items: 4,
+    paymentMethod: 'UPI',
+    trackingId: 'TRK-784521',
+    deliveryAddress: 'House 22, MG Road, Indore - 452001',
+    itemsPreview: [
+      'Carrot - Orange (1 kg)',
+      'Cucumber (500 g)',
+      'Almonds (200 g)',
+    ],
+    statusTimeline: [
+      { label: 'Order placed', date: '20 Feb 2026, 9:10 AM' },
+      { label: 'Packed', date: '20 Feb 2026, 10:30 AM' },
+      { label: 'Delivered', date: '20 Feb 2026, 1:15 PM' },
+    ],
+  },
+  {
+    id: 'ORD-100221',
+    date: '18 Feb 2026',
+    status: 'Out for delivery',
+    total: 349,
+    items: 2,
+    paymentMethod: 'COD',
+    trackingId: 'TRK-784102',
+    deliveryAddress: 'Tech Park, Tower B, Indore - 452010',
+    itemsPreview: [
+      'Face Cream (50 g)',
+      'Soap (3 pcs)',
+    ],
+    statusTimeline: [
+      { label: 'Order placed', date: '18 Feb 2026, 8:45 AM' },
+      { label: 'Packed', date: '18 Feb 2026, 9:40 AM' },
+      { label: 'Out for delivery', date: '18 Feb 2026, 11:15 AM' },
+    ],
+  },
+  {
+    id: 'ORD-100198',
+    date: '15 Feb 2026',
+    status: 'Cancelled',
+    total: 189,
+    items: 1,
+    paymentMethod: 'Card',
+    trackingId: 'TRK-783890',
+    deliveryAddress: 'House 22, MG Road, Indore - 452001',
+    itemsPreview: [
+      'Roasted Makhana (200 g)',
+    ],
+    statusTimeline: [
+      { label: 'Order placed', date: '15 Feb 2026, 10:05 AM' },
+      { label: 'Cancelled', date: '15 Feb 2026, 11:30 AM' },
+    ],
+  },
+];
 
 const statusStyles = {
   delivered: 'bg-green-100 text-green-700',
@@ -100,7 +184,7 @@ const emptyAddress = {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(MOCK_ORDERS);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState('');
   const { toast: ordersActionToast, showToast: showOrdersToast } = useTimedToast(1800);
@@ -109,12 +193,12 @@ const ProfilePage = () => {
   const deliveredCount = orders.filter((order) => order.status === 'Delivered').length;
   const latestOrder = orders[0];
 
-  const [profile, setProfile] = useState(emptyProfile);
-  const [profileDraft, setProfileDraft] = useState(emptyProfile);
+  const [profile, setProfile] = useState(MOCK_PROFILE);
+  const [profileDraft, setProfileDraft] = useState(MOCK_PROFILE);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
 
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] = useState(MOCK_ADDRESSES);
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
   const [addressDraft, setAddressDraft] = useState(emptyAddress);
   const [editingAddressId, setEditingAddressId] = useState(null);
@@ -141,9 +225,6 @@ const ProfilePage = () => {
     }
 
     setProfile(profileDraft);
-    localStorage.setItem('userName', profileDraft.name);
-    localStorage.setItem('userPhone', profileDraft.phone);
-    localStorage.setItem('userEmail', profileDraft.email);
     setIsEditingProfile(false);
     setProfileError('');
   };
@@ -281,38 +362,17 @@ const ProfilePage = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      navigate('/sign-in');
-      return undefined;
-    }
-
-    const storedName = localStorage.getItem('userName') || '';
-    const storedPhone = localStorage.getItem('userPhone') || '';
-    const storedEmail = localStorage.getItem('userEmail') || '';
-    const nextProfile = {
-      name: storedName,
-      phone: storedPhone,
-      email: storedEmail,
-    };
-    setProfile(nextProfile);
-    setProfileDraft(nextProfile);
-
     const loadOrders = async () => {
       setOrdersLoading(true);
       try {
-        const userId = localStorage.getItem('userId');
-        const response = await fetch(`http://localhost:5000/api/orders/customer/orders?userId=${encodeURIComponent(userId)}`);
-        if (!response.ok) throw new Error('Failed to fetch orders');
-        const data = await response.json();
-        
-        if (!cancelled && Array.isArray(data.data)) {
-          const mappedOrders = data.data.map(mapApiOrderToView);
+        const apiOrders = await getOrders();
+        if (!cancelled && Array.isArray(apiOrders)) {
+          const mappedOrders = apiOrders.map(mapApiOrderToView);
           setOrders(mappedOrders.length > 0 ? mappedOrders : []);
         }
       } catch {
         if (!cancelled) {
-          setOrders([]);
+          setOrders(MOCK_ORDERS);
         }
       } finally {
         if (!cancelled) setOrdersLoading(false);
@@ -328,8 +388,8 @@ const ProfilePage = () => {
           if (parsed.line1?.trim()) {
             await saveAddress({
               label: parsed.label || 'Home',
-              name: parsed.fullName || storedName,
-              phone: parsed.phone || storedPhone,
+              name: parsed.fullName || profile.name,
+              phone: parsed.phone || profile.phone,
               line1: parsed.line1,
               city: parsed.city,
               state: parsed.state,
@@ -342,10 +402,10 @@ const ProfilePage = () => {
         
         // Load from backend
         const backendAddresses = await getAddresses();
-        setAddresses(backendAddresses.length > 0 ? backendAddresses : []);
+        setAddresses(backendAddresses.length > 0 ? backendAddresses : MOCK_ADDRESSES);
       } catch {
         // Fallback to mock
-        setAddresses([]);
+        setAddresses(MOCK_ADDRESSES);
       }
     };
 
@@ -365,12 +425,7 @@ const ProfilePage = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-xl font-bold">
-                {(profile.name || 'User')
-                  .split(' ')
-                  .map((part) => part[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
+                {profile.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-white/70">Profile</p>
@@ -456,7 +511,7 @@ const ProfilePage = () => {
                       className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none"
                     />
                   ) : (
-                    <p className="mt-1 text-sm font-semibold text-stone-900">{profile.phone || 'Not set'}</p>
+                    <p className="mt-1 text-sm font-semibold text-stone-900">{profile.phone}</p>
                   )}
                 </div>
                 <div className="sm:col-span-2">
@@ -469,7 +524,7 @@ const ProfilePage = () => {
                       className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none"
                     />
                   ) : (
-                    <p className="mt-1 text-sm font-semibold text-stone-900">{profile.email || 'Not set'}</p>
+                    <p className="mt-1 text-sm font-semibold text-stone-900">{profile.email}</p>
                   )}
                 </div>
               </div>
@@ -659,9 +714,15 @@ const ProfilePage = () => {
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-bold text-stone-900">Active Orders</h2>
-                  <p className="mt-1 text-sm text-stone-500">Orders currently being processed.</p>
+                  <h2 className="text-lg font-bold text-stone-900">Recent orders</h2>
+                  <p className="mt-1 text-sm text-stone-500">Track your latest deliveries.</p>
                 </div>
+                <button
+                  type="button"
+                  className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                >
+                  View all
+                </button>
               </div>
 
               <div className="mt-5 space-y-4">
@@ -669,11 +730,11 @@ const ProfilePage = () => {
                   <div className="rounded-xl border border-stone-200 px-4 py-4 text-sm text-stone-500">
                     Loading orders...
                   </div>
-                ) : orders.filter((o) => !['delivered', 'cancelled'].includes(o.statusKey)).length === 0 ? (
+                ) : orders.length === 0 ? (
                   <div className="rounded-xl border border-stone-200 px-4 py-4 text-sm text-stone-500">
-                    No active orders.
+                    No orders found yet.
                   </div>
-                ) : orders.filter((o) => !['delivered', 'cancelled'].includes(o.statusKey)).map((order) => (
+                ) : orders.map((order) => (
                   <div
                     key={order.id}
                     className="rounded-xl border border-stone-200 px-4 py-4"
@@ -738,79 +799,6 @@ const ProfilePage = () => {
                 ))}
               </div>
             </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-stone-900">Order History</h2>
-                  <p className="mt-1 text-sm text-stone-500">Your completed and cancelled orders.</p>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-4">
-                {ordersLoading ? (
-                  <div className="rounded-xl border border-stone-200 px-4 py-4 text-sm text-stone-500">
-                    Loading orders...
-                  </div>
-                ) : orders.filter((o) => ['delivered', 'cancelled'].includes(o.statusKey)).length === 0 ? (
-                  <div className="rounded-xl border border-stone-200 px-4 py-4 text-sm text-stone-500">
-                    No past orders.
-                  </div>
-                ) : orders.filter((o) => ['delivered', 'cancelled'].includes(o.statusKey)).map((order) => (
-                  <div
-                    key={order.id}
-                    className="rounded-xl border border-stone-200 px-4 py-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-semibold text-stone-900">{order.id}</p>
-                        <p className="text-xs text-stone-500">{order.date} • {order.items} items</p>
-                        <p className="mt-1 text-xs text-stone-500">Payment: {order.paymentMethod}</p>
-                        <p className="text-xs text-stone-500">Tracking: {order.trackingId}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[order.statusKey] || statusStyles.pending}`}>
-                          {order.status}
-                        </span>
-                        <p className="text-sm font-semibold text-stone-900">₹{order.total}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                      <div className="rounded-lg bg-stone-50 px-3 py-2">
-                        <p className="text-xs font-semibold text-stone-500">Items</p>
-                        <ul className="mt-1 space-y-1 text-xs text-stone-700">
-                          {order.itemsPreview.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="rounded-lg bg-stone-50 px-3 py-2">
-                        <p className="text-xs font-semibold text-stone-500">Delivery address</p>
-                        <p className="mt-1 text-xs text-stone-700">{order.deliveryAddress}</p>
-                      </div>
-                      <div className="rounded-lg bg-stone-50 px-3 py-2">
-                        <p className="text-xs font-semibold text-stone-500">Status timeline</p>
-                        <ul className="mt-1 space-y-1 text-xs text-stone-700">
-                          {order.statusTimeline.map((step) => (
-                            <li key={step.label}>{step.label} • {step.date}</li>
-                          ))}
-                        </ul>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/orders/${order.id}`)}
-                            className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-stone-800"
-                          >
-                            Track order
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </section>
 
           <aside className="space-y-6">
@@ -849,6 +837,41 @@ const ProfilePage = () => {
                   No recent order yet.
                 </div>
               )}
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-stone-900">Quick actions</h2>
+              <div className="mt-4 space-y-3">
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                >
+                  Manage addresses
+                </button>
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                >
+                  Payment methods
+                </button>
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                >
+                  Support
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-stone-900">Membership</h2>
+              <p className="mt-1 text-sm text-stone-500">Prime delivery and exclusive offers.</p>
+              <button
+                type="button"
+                className="mt-4 w-full rounded-lg bg-stone-900 py-2 text-sm font-semibold text-white transition hover:bg-stone-800"
+              >
+                Join now
+              </button>
             </div>
           </aside>
         </div>

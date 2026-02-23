@@ -1,36 +1,19 @@
-const { User } = require('../models');
-const {
-  generateAccessToken,
-  generateRefreshToken
-} = require('../utils/tokenManager');
+const { users } = require('../data/users');
 
-const register = async (req, res) => {
+const register = (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
-    const normalizedPhone = String(phone || '').replace(/\D/g, '');
-    const resolvedEmail = email && String(email).trim().length > 0
-      ? email
-      : (normalizedPhone ? `${normalizedPhone}@general-store.local` : '');
 
     // Validate input
-    if (!name || !password || !phone) {
+    if (!name || !email || !password || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'Name, password, and phone are required'
+        message: 'Name, email, password, and phone are required'
       });
     }
 
     // Check if user already exists
-    if (!resolvedEmail) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required to register'
-      });
-    }
-
-    const existingUser = await User.findOne({
-      $or: [{ email: resolvedEmail }, { phone }]
-    });
+    const existingUser = users.find((u) => u.email === email || u.phone === phone);
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -38,33 +21,31 @@ const register = async (req, res) => {
       });
     }
 
-    const newUser = new User({
+    // Create new user
+    const userId = `user-${Date.now()}`;
+    const newUser = {
+      id: userId,
       name,
-      email: resolvedEmail,
-      phone: normalizedPhone || phone,
-      password,
+      email,
+      phone,
+      password, // In production, this should be hashed
       role: role || 'customer',
+      createdAt: new Date().toISOString(),
       isActive: true
-    });
+    };
 
-    await newUser.save();
-
-    const accessToken = generateAccessToken(newUser._id, newUser.role);
-    const refreshToken = generateRefreshToken(newUser._id);
-    newUser.refreshToken = refreshToken;
-    await newUser.save();
+    users.push(newUser);
 
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
       data: {
-        userId: newUser._id,
+        userId: newUser.id,
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
-        accessToken,
-        refreshToken
+        accessToken: newUser.id // Simple token for now
       }
     });
   } catch (error) {
@@ -77,24 +58,20 @@ const register = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+const login = (req, res) => {
   try {
-    const { email, password, phone, phoneNumber } = req.body;
-    const normalizedPhone = String(phone || phoneNumber || '').replace(/\D/g, '');
-    const hasEmail = typeof email === 'string' && email.includes('@');
+    const { email, password } = req.body;
 
     // Validate input
-    if ((!hasEmail && !normalizedPhone) || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email or phone and password are required'
+        message: 'Email and password are required'
       });
     }
 
-    // Find user by email or phone
-    const user = hasEmail
-      ? await User.findOne({ email }).select('+password')
-      : await User.findOne({ phone: normalizedPhone }).select('+password');
+    // Find user by email
+    const user = users.find((u) => u.email === email);
 
     if (!user) {
       return res.status(401).json({
@@ -104,8 +81,7 @@ const login = async (req, res) => {
     }
 
     // Check password (in production, use bcrypt.compare)
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
+    if (user.password !== password) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -120,22 +96,16 @@ const login = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken(user._id, user.role);
-    const refreshToken = generateRefreshToken(user._id);
-    user.refreshToken = refreshToken;
-    await user.save();
-
     return res.json({
       success: true,
       message: 'Login successful',
       data: {
-        userId: user._id,
+        userId: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
         role: user.role,
-        accessToken,
-        refreshToken
+        accessToken: user.id // Simple token for now
       }
     });
   } catch (error) {
@@ -156,7 +126,7 @@ const logout = (req, res) => {
   });
 };
 
-const getProfile = async (req, res) => {
+const getProfile = (req, res) => {
   try {
     const userId = req.headers['x-user-id'];
     if (!userId) {
@@ -166,7 +136,7 @@ const getProfile = async (req, res) => {
       });
     }
 
-    const user = await User.findById(userId);
+    const user = users.find((u) => u.id === userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -177,7 +147,7 @@ const getProfile = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -196,7 +166,7 @@ const getProfile = async (req, res) => {
 // Store OTPs in memory (in production, use Redis or database)
 const otpStore = {};
 
-const requestPasswordReset = async (req, res) => {
+const requestPasswordReset = (req, res) => {
   try {
     const { phoneNumber } = req.body;
 
@@ -209,7 +179,7 @@ const requestPasswordReset = async (req, res) => {
     }
 
     // Find user by phone
-    const user = await User.findOne({ phone: phoneNumber });
+    const user = users.find((u) => u.phone === phoneNumber);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -306,7 +276,7 @@ const verifyOtp = (req, res) => {
   }
 };
 
-const resetPassword = async (req, res) => {
+const resetPassword = (req, res) => {
   try {
     const { phoneNumber, newPassword, confirmPassword } = req.body;
 
@@ -342,7 +312,7 @@ const resetPassword = async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ phone: phoneNumber });
+    const user = users.find((u) => u.phone === phoneNumber);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -350,8 +320,9 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    // Update password
     user.password = newPassword;
-    await user.save();
+    user.updatedAt = new Date().toISOString();
 
     // Clear OTP
     delete otpStore[phoneNumber];

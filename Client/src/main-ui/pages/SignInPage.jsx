@@ -9,17 +9,25 @@ const SignInPage = () => {
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast, showToast } = useTimedToast(4000);
 
   const validateForm = () => {
     const newErrors = {};
-    if (!phoneNumber) newErrors.phoneNumber = 'Mobile number is required';
-    if (phoneNumber && !/^[0-9]{10}$/.test(phoneNumber.replace(/\D/g, ''))) {
-      newErrors.phoneNumber = 'Mobile number must be 10 digits';
+    if (isAdminLogin) {
+      // Admin login validation
+      if (!phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+      if (!password) newErrors.password = 'Password is required';
+    } else {
+      // Regular customer login validation
+      if (!phoneNumber) newErrors.phoneNumber = 'Mobile number is required';
+      if (phoneNumber && !/^[0-9]{10}$/.test(phoneNumber.replace(/\D/g, ''))) {
+        newErrors.phoneNumber = 'Mobile number must be 10 digits';
+      }
+      if (!password) newErrors.password = 'Password is required';
     }
-    if (!password) newErrors.password = 'Password is required';
     return newErrors;
   };
 
@@ -34,45 +42,33 @@ const SignInPage = () => {
     setIsLoading(true);
     try {
       const response = await login({
-        phone: phoneNumber,
+        email: isAdminLogin ? phoneNumber : `${phoneNumber}@general-store.local`,
         password
       });
 
-      // Validate response
-      if (!response || !response.accessToken) {
-        showToast('Invalid login response from server', 'error');
+      // Store auth tokens
+      if (response.accessToken) {
+        localStorage.setItem('authToken', response.accessToken);
+        localStorage.setItem('userId', response.userId);
+        localStorage.setItem('userName', response.name);
+        localStorage.setItem('userRole', response.role);
+      }
+
+      // Check if user has correct role
+      if (isAdminLogin && response.role !== 'admin') {
+        showToast('Admin credentials required', 'error');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userRole');
         setIsLoading(false);
         return;
       }
 
-      // Store auth tokens
-      localStorage.setItem('authToken', response.accessToken);
-      localStorage.setItem('userId', response.userId);
-      localStorage.setItem('userName', response.name);
-      localStorage.setItem('userRole', response.role || 'customer');
-      
-      if (response.phone) {
-        localStorage.setItem('userPhone', response.phone);
-      }
-      if (response.email) {
-        localStorage.setItem('userEmail', response.email);
-      }
-      
-      // Clear admin auth if exists
-      localStorage.removeItem('adminAuthToken');
-      localStorage.removeItem('adminUserId');
-      localStorage.removeItem('adminRole');
-      
-      console.log('✅ Login successful - tokens stored');
-      // Dispatch custom event to notify header of auth change
-      window.dispatchEvent(new Event('authChange'));
-      
       showToast('Sign in successful!', 'success');
-      
-      // Redirect immediately
       setTimeout(() => {
-        navigate('/');
-      }, 500);
+        navigate(isAdminLogin ? '/admin' : '/');
+      }, 1500);
     } catch (err) {
       showToast(err.message || 'Sign in failed. Please try again.', 'error');
     } finally {
@@ -93,36 +89,71 @@ const SignInPage = () => {
             </div>
             <div>
               <h1 className="font-display text-3xl font-bold text-stone-900">
-                Welcome Back
+                {isAdminLogin ? 'Admin Access' : 'Welcome Back'}
               </h1>
               <p className="text-xs text-stone-500">
-                Sign in to continue shopping
+                {isAdminLogin ? 'Admin credentials required' : 'Sign in to continue shopping'}
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} autoComplete="off" className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {/* Admin Login Toggle */}
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-stone-50 p-3">
+              <input
+                type="checkbox"
+                id="adminToggle"
+                checked={isAdminLogin}
+                onChange={(e) => {
+                  setIsAdminLogin(e.target.checked);
+                  setPhoneNumber('');
+                  setPassword('');
+                  setErrors({});
+                }}
+                className="h-4 w-4 rounded border-stone-300 text-primary-600"
+              />
+              <label htmlFor="adminToggle" className="text-sm font-semibold text-stone-700">
+                Login as Admin
+              </label>
+            </div>
+
             {/* Phone/Email Field */}
             <div>
               <label htmlFor="phoneNumber" className="block text-sm font-semibold text-stone-700">
-                Mobile Number
+                {isAdminLogin ? 'Email Address' : 'Mobile Number'}
               </label>
-              <div className="mt-2 flex items-center gap-2 rounded-lg border border-stone-300 px-3 py-2.5 focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-200">
-                <span className="text-sm font-semibold text-stone-600">+91</span>
+              {!isAdminLogin && (
+                <div className="mt-2 flex items-center gap-2 rounded-lg border border-stone-300 px-3 py-2.5 focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-200">
+                  <span className="text-sm font-semibold text-stone-600">+91</span>
+                  <input
+                    id="phoneNumber"
+                    type="tel"
+                    maxLength="10"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value.replace(/\D/g, ''));
+                      setErrors({ ...errors, phoneNumber: '' });
+                    }}
+                    className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
+                    placeholder="9876543210"
+                  />
+                </div>
+              )}
+              {isAdminLogin && (
                 <input
                   id="phoneNumber"
-                  type="tel"
-                  maxLength="10"
+                  type="email"
                   value={phoneNumber}
                   onChange={(e) => {
-                    setPhoneNumber(e.target.value.replace(/\D/g, ''));
+                    setPhoneNumber(e.target.value);
                     setErrors({ ...errors, phoneNumber: '' });
                   }}
-                  autoComplete="off"
-                  className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
-                  placeholder="9876543210"
+                  className={`mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                    errors.phoneNumber ? 'border-red-300 focus:ring-red-200' : 'border-stone-300 focus:ring-primary-200'
+                  }`}
+                  placeholder="admin@general-store.local"
                 />
-              </div>
+              )}
               {errors.phoneNumber && <p className="mt-1 text-xs text-red-600">{errors.phoneNumber}</p>}
             </div>
 
@@ -139,7 +170,6 @@ const SignInPage = () => {
                   setPassword(e.target.value);
                   setErrors({ ...errors, password: '' });
                 }}
-                autoComplete="new-password"
                 className={`mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
                   errors.password ? 'border-red-300 focus:ring-red-200' : 'border-stone-300 focus:ring-primary-200'
                 }`}

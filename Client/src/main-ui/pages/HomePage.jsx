@@ -110,7 +110,7 @@ const HomePage = () => {
       <MainHeader />
 
       {/* Animated Category Cards */}
-      <section className="hidden md:block mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
           {CATEGORY_SLUGS.map((slug, index) => {
             const categoryColors = {
